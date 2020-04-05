@@ -1,4 +1,10 @@
 // Classes for the card game model.
+let NotAvailableCard = new ReferenceError(
+  `The card "${card.value}, ${card.family}" is not in this hand`
+);
+let NotANumberNorCard = new TypeError(
+  `"card" must be a number or a Card object`
+);
 
 class Card {
   constructor(value, family, display) {
@@ -95,7 +101,7 @@ class Hand {
     } else if (card.constructor.name == "Card") {
       let cards_index = this.cards.indexOf(card);
       if (cards_index == -1) {
-        throw new ReferenceError(`The card ${card} is not in this hand`);
+        throw NotAvailableCard;
       } else {
         this.cards.splice(cards_index, 1);
       }
@@ -104,7 +110,36 @@ class Hand {
         this.visible.splice(visible_index, 1);
       }
     } else {
-      throw new TypeError(`"card" must be a number or a Card object`);
+      throw NotANumberNorCard;
+    }
+  }
+
+  removeCards(listCards) {
+    for (let i = 0; i < listCards.length; i++) {
+      try {
+        removeCard(listCards[i]);
+      } catch (e) {
+        throw new Error(`Error at element ${i} \n ${e.name}: ${e.message}`);
+      }
+    }
+  }
+
+  get cards() {
+    return this.cards;
+  }
+
+  get card(card) {
+    if (Number.isInteger(card)) {
+      return this.cards[card];
+    } else if (card.constructor.name == "Card") {
+      let cards_index = this.cards.indexOf(card);
+      if (cards_index == -1) {
+        throw NotAvailableCard;
+      } else {
+        return this.cards[cards_index];
+      }
+    } else {
+      throw NotANumberNorCard;
     }
   }
 }
