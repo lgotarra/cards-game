@@ -2,7 +2,6 @@
 
 class Card {
   constructor(value, family, display) {
-    // Card with image
     if (isNaN(value)) {
       throw new TypeError(`"value" must be a number`);
     }
@@ -23,19 +22,18 @@ class Card {
 }
 
 class Hand {
-  constructor(list, kind, lastCard) {
-    // Default constructor
-    this.list = list;
+  constructor(cards, kind, lastCard) {
+    this.cards = cards;
     switch (kind) {
-      case `player`:
+      case "player":
         this.visible = [];
         break;
-      case `table`:
-        this.visible = Array.from(Array(list.length).keys());
+      case "table":
+        this.visible = Array.from(Array(cards.length).keys());
         break;
-      case `pile`:
+      case "pile":
         if (lastCard) {
-          this.visible = [list.length - 1];
+          this.visible = [cards.length - 1];
         } else if (!lastCard) {
           this.visible = [];
         } else {
@@ -46,5 +44,22 @@ class Hand {
         throw new TypeError(`"kind" must be "player", "table" or "pile"`);
     }
     this.kind = kind;
+  }
+
+  addCard(card) {
+    if (typeof card != Card) {
+      throw new TypeError(`You must insert a Card object`);
+    }
+    this.cards.push(card);
+    switch (this.kind) {
+      case "table":
+        this.visible.push(this.cards.length - 1);
+        break;
+      case "pile":
+        if (this.visible.length == 1) {
+          this.visible[0] = this.cards.length - 1;
+        }
+        break;
+    }
   }
 }
