@@ -12,9 +12,15 @@ class Card {
     this.family = family;
     this.display = display;
   }
-  set Display(display) {
+  set display(display) {
     // Set a card image
     this.display = display;
+  }
+  get value() {
+    return this.value;
+  }
+  get family() {
+    return this.family;
   }
 }
 
