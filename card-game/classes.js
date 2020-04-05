@@ -62,4 +62,25 @@ class Hand {
         break;
     }
   }
+
+  addCards(listCards) {
+    for (let i = 0; i < listCards.length; i++) {
+      if (typeof listCards[i] != Card) {
+        throw new TypeError(
+          `You must insert a Card object. Bad parameter at index = ${i}`
+        );
+      }
+      this.cards.push(listCards[i]);
+    }
+    switch (this.kind) {
+      case "table":
+        this.visible = Array.from(Array(cards.length).keys());
+        break;
+      case "pile":
+        if (this.visible.length == 1) {
+          this.visible[0] = this.cards.length - 1;
+        }
+        break;
+    }
+  }
 }
