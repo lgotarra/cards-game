@@ -142,4 +142,34 @@ class Hand {
       throw NotANumberNorCard;
     }
   }
+
+  toggleVisibility(card) {
+    // This method toggles the visibility of a card and returns the new state
+    if (Number.isInteger(card)) {
+      let visibility_index = this.visible.indexOf(card);
+      if (visibility_index == -1) {
+        this.visible.push(card);
+        return "Visible";
+      } else {
+        this.visible.splice(visibility_index, 1);
+        return "Not visible";
+      }
+    } else if (card.constructor.name == "Card") {
+      let cards_index = this.cards.indexOf(card);
+      if (cards_index == -1) {
+        throw NotAvailableCard;
+      } else {
+        let visibility_index = this.visible.indexOf(cards_index);
+        if (visibility_index == -1) {
+          this.visible.push(cards_index);
+          return "Visible";
+        } else {
+          this.visible.splice(visibility_index, 1);
+          return "Not visible";
+        }
+      }
+    } else {
+      throw NotANumberNorCard;
+    }
+  }
 }
