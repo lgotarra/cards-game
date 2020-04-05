@@ -2,7 +2,7 @@
 
 class Card {
   constructor(value, family, display) {
-    if (isNaN(value)) {
+    if (!Number.isInteger(value)) {
       throw new TypeError(`"value" must be a number`);
     }
     this.value = value;
@@ -47,7 +47,7 @@ class Hand {
   }
 
   addCard(card) {
-    if (typeof card != Card) {
+    if (card.constructor.name != "Card") {
       throw new TypeError(`You must insert a Card object`);
     }
     this.cards.push(card);
@@ -65,7 +65,7 @@ class Hand {
 
   addCards(listCards) {
     for (let i = 0; i < listCards.length; i++) {
-      if (typeof listCards[i] != Card) {
+      if (listCards[i].constructor.name != "Card") {
         throw new TypeError(
           `You must insert a Card object. Bad parameter at index = ${i}`
         );
@@ -81,6 +81,30 @@ class Hand {
           this.visible[0] = this.cards.length - 1;
         }
         break;
+    }
+  }
+
+  removeCard(card) {
+    // card could be a Card object or the index of a Card element from this.cards
+    if (Number.isInteger(card)) {
+      this.cards.splice(card, 1);
+      let visible_index = this.visible.indexOf(card);
+      if (visible_index != -1) {
+        this.visible.splice(visible_index, 1);
+      }
+    } else if (card.constructor.name == "Card") {
+      let cards_index = this.cards.indexOf(card);
+      if (cards_index == -1) {
+        throw new ReferenceError(`The card ${card} is not in this hand`);
+      } else {
+        this.cards.splice(cards_index, 1);
+      }
+      let visible_index = this.visible.indexOf(cards_index);
+      if (visible_index != -1) {
+        this.visible.splice(visible_index, 1);
+      }
+    } else {
+      throw new TypeError(`"card" must be a number or a Card object`);
     }
   }
 }
