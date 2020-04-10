@@ -38,15 +38,14 @@ let NotAvailableMethod = new KindError(
 
 class Card {
   /**
-   * Default Card constructor
-   * @param {Number} value Card value
+   * Default Card constructor. 
+   * @param {String} value Card value. 
+   * For English playing cards: ['2','3','4','5','6','7','8','9','10','jack','queen', 'king', 'ace'].
+   * The card value is not limited, so you're able to create your own deck of cards.
    * @param {String} suit Card suit
    * @param {String} display Route to the card picture. (IMG i.ex. .png)
    */
   constructor(value, suit, display) {
-    if (!Number.isInteger(value)) {
-      throw new TypeError(`"value" must be a number`);
-    }
     this.value = value;
     this.suit = suit;
     this.display = display;
@@ -320,10 +319,10 @@ class Hand {
         );
       }
     }
-    this.cards = [...this.cards, ...cards];
+    this.cards = this.cards.concat(cards);
     switch (this.kind) {
       case "table":
-        this.visible = [...this.visible, ...cards];
+        this.visible = this.visible.concat(cards);
         break;
       case "pile":
         if (this.visible.length == 1) {

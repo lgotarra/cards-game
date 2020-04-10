@@ -43,6 +43,24 @@ function getRandomIntNoRepeat(max, quantity) {
   return random;
 }
 
+/**
+ * Converts Strings to Integer based on the Blackjack cards value
+ * @param {String} n String to convert
+ */
+function stringToInt(n) {
+  if (n != "jack" || n != "queen" || n != "king" || n != "ace") {
+    n = parseInt(n);
+  } else {
+    if (n == "jack" || n == "queen" || n == "king") {
+      n = 10;
+    } else {
+      n = 11;
+    }
+  }
+}
+
+sumArray = (arr) => arr.reduce((a, b) => a + b, 0);
+
 /*=================================================================================================
   ----------------------------------------UTILS TO EXPORT------------------------------------------
   =================================================================================================*/
@@ -98,3 +116,47 @@ function dealHands(deck, hands, quantity) {
   }
 }
 
+/**
+ * Compare two hands and returns the winner name
+ * @param {Hand} a Hand to compare
+ * @param {Hand} b Hand to compare
+ */
+function compareHandsBlackjack(a, b) {
+  let cards_a = a.cards();
+  let values_a = [];
+  for (card of cards_a) {
+    values_a.push(card.value);
+  }
+  let cards_b = b.cards();
+  let values_b = [];
+  for (card of cards_b) {
+    values_b.push(card.value);
+  }
+
+  values_a.map((n) => stringToInt(n));
+  values_b.map((n) => stringToInt(n));
+
+  total_a = sumArray(values_a);
+  total_b = sumArray(values_b);
+
+  values = [total_a, total_b];
+
+  switch (values) {
+    case values[0] > 21 && values[1] > 21:
+      return "Nobody wins";
+    case values[0] > 21 && values[2] < 21:
+      return `${b.name()} wins`;
+    case values[0] < 21 && values[2] > 21:
+      return `${a.name()} wins`;
+    case values[0] < 21 && values[2] < 21:
+      let a_dif = 21 - values[0];
+      let b_dif = 21 - values[1];
+      if (a_dif < b_dif) {
+        return `${a.name()} wins`;
+      } else if (a_dif > b_dif) {
+        return `${b.name()} wins`;
+      } else {
+        return "Draw";
+      }
+  }
+}
