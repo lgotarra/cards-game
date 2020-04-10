@@ -91,12 +91,14 @@ class Hand {
   /**
    * Default Hand constructor. Attributes: cards (Array<Card>),
    * kind (Type of hand), visible (Public/Visible cards).
+   * @param {String} name Owner name
    * @param {Array<Card>} cards Array of cards that belongs to a hand
    * @param {String} kind Type of hand: player | table | pile
    * @param {Boolean} lastCard True: last card visible. False: last card not visible. Only
    * available for "pile" kind
    */
-  constructor(cards, kind, lastCard) {
+  constructor(name, cards, kind, lastCard) {
+    this.name = name;
     this.cards = cards;
     this.kind = kind;
     switch (kind) {
@@ -121,6 +123,12 @@ class Hand {
   /*================================================================================================
   ----------------------------------------GETTERS & SETTERS-----------------------------------------
   =================================================================================================*/
+  /**
+   * Gets the owner name
+   */
+  get name() {
+    return this.name;
+  }
 
   /**
    * Gets the cards array
