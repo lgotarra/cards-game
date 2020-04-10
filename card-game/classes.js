@@ -12,11 +12,11 @@ the most common errors when calling some methods.
   ================================================================================================*/
 
 /* TODO:
-  * Set "pile" as extensive class of hand
-  */
+ * NO: I'll use a switch case if need.Set "pile" as extensive class of hand
+ */
 
 let NotAvailableCard = new ReferenceError(
-  `The card "${card.value}, ${card.suit}" is not in this hand`
+  `The card you requested is not in this hand`
 );
 let NotANumberNorCard = new TypeError(
   `"card" must be a number or a Card object`
@@ -29,10 +29,21 @@ let OutOfArray = new ReferenceError(
   `The card you are looking for is out of this hand. Please try a lower index`
 );
 
+class KindError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "KindError";
+  }
+}
+
+let NotAvailableMethod = new KindError(
+  `This method is not available for this kind of hand`
+);
+
 class Card {
   /**
    * Default Card constructor
-   * @param {Integer} value Card value
+   * @param {Number} value Card value
    * @param {String} suit Card suit
    * @param {String} display Route to the card picture. (SVG or IMG)
    */
@@ -82,30 +93,29 @@ class Hand {
    * kind (Type of hand), visible (Public/Visible cards).
    * @param {Array<Card>} cards Array of cards that belongs to a hand
    * @param {String} kind Type of hand: player | table | pile
-   * @param {Boolean} lastCard Last card performance. Only used for pile. True: visible. False: not visible
+   * @param {Boolean} lastCard True: last card visible. False: last card not visible. Only
+   * available for "pile" kind
    */
   constructor(cards, kind, lastCard) {
     this.cards = cards;
+    this.kind = kind;
     switch (kind) {
       case "player":
         this.visible = [];
         break;
       case "table":
-        this.visible = Array.from(Array(cards.length).keys());
+        this.visible = cards;
         break;
       case "pile":
         if (lastCard) {
-          this.visible = [cards.length - 1];
-        } else if (!lastCard) {
-          this.visible = [];
+          this.visible[0] = cards[cards.length - 1];
         } else {
-          throw new TypeError(`"lastCard" must be boolean`);
+          this.visible = [];
         }
         break;
       default:
         throw new TypeError(`"kind" must be "player", "table" or "pile"`);
     }
-    this.kind = kind;
   }
 
   /*================================================================================================
@@ -121,24 +131,25 @@ class Hand {
 
   /**
    * Gets a card from the hand.
-   * @param {Integer | Card} card Index or Card that you want to get.
+   * @param {Number | Card} card Index or Card that you want to get.
    */
-  get card(card) {
-    if (Number.isInteger(card)) {
-      if (card < this.cards.length) {
-        return this.cards[card];
-      } else {
-        throw OutOfArray;
-      }
-    } else if (card.constructor.name == "Card") {
-      let cards_index = this.cards.indexOf(card);
-      if (cards_index == -1) {
-        throw NotAvailableCard;
-      } else {
-        return this.cards[cards_index];
-      }
-    } else {
-      throw NotANumberNorCard;
+  getCard(card) {
+    switch (card.constructor.name) {
+      case "Number":
+        if (card < this.cards.length) {
+          return this.cards[card];
+        } else {
+          throw OutOfArray;
+        }
+      case "Card":
+        let cards_index = this.cards.indexOf(card);
+        if (cards_index == -1) {
+          throw NotAvailableCard;
+        } else {
+          return this.cards[cards_index];
+        }
+      default:
+        throw NotANumberNorCard;
     }
   }
 
@@ -171,26 +182,47 @@ class Hand {
   }
 
   /**
-   * Set some cards visible. This will drop any previous visible card
+   * Set some cards visible. This will drop any previous visible card.
+   * Only available for "player" and "table" hands.
    * @param {Array<Card>} cards Array of cards that you want to set visible
    */
   set visible(cards) {
-    for (let card of cards) {
-      if (card.constructor.name != "Card") {
-        throw new Error(
-          `Error at element ${cards.indexOf(card)} \n ${NotACard.error} ${
-            NotACard.message
-          }`
-        );
-      } else if (this.cards.indexOf(card) == -1) {
-        throw new Error(
-          `Error at element ${cards.indexOf(card)} \n ${OutOfArray.error} ${
-            OutOfArray.message
-          }`
-        );
+    if (this.kind != "pile") {
+      for (let card of cards) {
+        if (card.constructor.name != "Card") {
+          throw new Error(
+            `Error at element ${cards.indexOf(card)} \n ${NotACard.error} ${
+              NotACard.message
+            }`
+          );
+        } else if (this.cards.indexOf(card) == -1) {
+          throw new Error(
+            `Error at element ${cards.indexOf(card)} \n ${OutOfArray.error} ${
+              OutOfArray.message
+            }`
+          );
+        }
+      }
+      this.visible = cards;
+    } else {
+      throw NotAvailableMethod;
+    }
+  }
+
+  /**
+   * Change lastCard performance. Method only available for "pile" kind.
+   * @param {Boolean} newState True: last card visible. False: last card not visible.
+   */
+  set lastVisible(newState) {
+    if (this.kind != "pile") {
+      throw NotAvailableMethod;
+    } else {
+      if (newState) {
+        this.visible[0] = this.cards[this.cards.length - 1];
+      } else {
+        this.visible = [];
       }
     }
-    this.visible = cards;
   }
 
   /*================================================================================================
@@ -199,36 +231,37 @@ class Hand {
 
   /**
    * Returns the visibility state of a card
-   * @param {Card | Integer} card Index or card of the hand
+   * @param {Card | Number} card Index or card of the hand
    * True: visible for all. False: only visible for the card owner
    */
   isVisible(card) {
-    if (Number.isInteger(card)) {
-      if (card >= this.cards.length) {
-        throw OutOfArray;
-      } else {
-        let aux_card = this.cards[card];
-        let visible_index = this.visible.indexOf(aux_card);
-        if (visible_index == -1) {
-          return false;
+    switch (card.constructor.name) {
+      case "Number":
+        if (card >= this.cards.length) {
+          throw OutOfArray;
         } else {
-          return true;
+          let aux_card = this.cards[card];
+          let visible_index = this.visible.indexOf(aux_card);
+          if (visible_index == -1) {
+            return false;
+          } else {
+            return true;
+          }
         }
-      }
-    } else if (card.constructor.name == "Card") {
-      let card_index = this.cards.indexOf(card);
-      if (card_index == -1) {
-        throw OutOfArray;
-      } else {
-        let visible_index = this.visible.indexOf(card);
-        if (visible_index == -1) {
-          return false;
+      case "Card":
+        let card_index = this.cards.indexOf(card);
+        if (card_index == -1) {
+          throw OutOfArray;
         } else {
-          return true;
+          let visible_index = this.visible.indexOf(card);
+          if (visible_index == -1) {
+            return false;
+          } else {
+            return true;
+          }
         }
-      }
-    } else {
-      throw NotANumberNorCard;
+      default:
+        throw NotANumberNorCard;
     }
   }
 
@@ -284,133 +317,137 @@ class Hand {
 
   /**
    * Remove a single card of a hand
-   * @param {Card | Integer} card Index or card that you want to remove from a hand
+   * @param {Card | Number} card Index or card that you want to remove from a hand
    */
   removeCard(card) {
-    if (Number.isInteger(card)) {
-      if (card >= this.cards.length) {
-        throw OutOfArray;
-      }
-      // Get the card that we're going to delete
-      let aux_card = this.card(card);
-      this.cards.splice(card, 1);
-      let visible_index = this.visible.indexOf(aux_card);
-      if (
-        card == this.cards.length &&
-        this.kind == "pile" &&
-        this.visible.length == 1
-      ) {
-        this.visible[0] = this.cards[this.cards.length - 1];
-      } else if (visible_index != -1) {
-        this.visible.splice(visible_index, 1);
-      }
-    } else if (card.constructor.name == "Card") {
-      let cards_index = this.cards.indexOf(card);
-      if (cards_index == -1) {
-        throw NotAvailableCard;
-      } else {
-        this.cards.splice(cards_index, 1);
-      }
-      let visible_index = this.visible.indexOf(card);
-      if (
-        cards_index == this.cards.length &&
-        this.kind == "pile" &&
-        this.visible.length == 1
-      ) {
-        this.visible[0] = this.cards[this.cards.length - 1];
-      } else if (visible_index != -1) {
-        this.visible.splice(visible_index, 1);
-      }
-    } else {
-      throw NotANumberNorCard;
-    }
-  }
-
-  /**
-   * Remove multiple elements from a hand
-   * @param {Array<Card>} cards
-   */
-  removeCards(cards) {
-    let cards_index = [];
-
-    for (let card of cards) {
-      if (card.constructor.name != "Card") {
-        throw new Error(
-          `Error at element ${cards.indexOf(card)} \n ${NotACard.error} ${
-            NotACard.message
-          }`
-        );
-      } else {
-        let aux_index = this.cards.indexOf(card);
-        if (aux_index == -1) {
-          throw new Error(
-            `Error at element ${cards.indexOf(card)} \n ${
-              NotAvailableCard.error
-            } ${NotAvailableCard.message}`
-          );
-        } else {
-          cards_index.push(aux_index);
-        }
-      }
-    }
-
-    for (let index in cards_index) {
-      delete this.cards[index];
-    }
-
-    // Remove empty items from this.cards
-    this.cards.filter(function () {
-      return true;
-    });
-
-    for (let card in cards) {
-      let visible_index = this.visible.indexOf(card);
-      if (visible_index != -1) {
-        delete this.visible[visible_index];
-      }
-    }
-
-    // Remove empty items from this.visible
-    this.visible.filter(function () {
-      return true;
-    });
-
-    // Update last visible element for pile hands
-    if (this.kind == "pile" && this.visible.length == 1) {
-      this.visible[0] = this.cards[length - 1];
-    }
-  }
-
-  /**
-   * Remove multiple elements from a hand
-   * @param {Array<Integer>} cards
-   */
-  removeCards(cards) {
-    let cards_array = [];
-
-    for (let card of cards) {
-      if (!Number.isInteger) {
-        throw new Error(
-          `Error at element ${cards.indexOf(card)} \n ${NotANumber.error} ${
-            NotANumber.message
-          }`
-        );
-      } else {
+    switch (card.constructor.name) {
+      case "Number":
         if (card >= this.cards.length) {
-          throw new Error(
-            `Error at element ${cards.indexOf(card)} \n ${OutOfArray.error} ${
-              OutOfArray.message
-            }`
-          );
-        } else {
-          let aux_card = this.card(card);
-          cards_array.push(aux_card);
+          throw OutOfArray;
         }
-      }
+        // Get the card that we're going to delete
+        let aux_card = this.card(card);
+        this.cards.splice(card, 1);
+        let visible_index = this.visible.indexOf(aux_card);
+        if (
+          card == this.cards.length &&
+          this.kind == "pile" &&
+          this.visible.length == 1
+        ) {
+          this.visible[0] = this.cards[this.cards.length - 1];
+        } else if (visible_index != -1) {
+          this.visible.splice(visible_index, 1);
+        }
+        break;
+      case "Card":
+        let cards_index = this.cards.indexOf(card);
+        if (cards_index == -1) {
+          throw NotAvailableCard;
+        } else {
+          this.cards.splice(cards_index, 1);
+        }
+        let visible_index = this.visible.indexOf(card);
+        if (
+          cards_index == this.cards.length &&
+          this.kind == "pile" &&
+          this.visible.length == 1
+        ) {
+          this.visible[0] = this.cards[this.cards.length - 1];
+        } else if (visible_index != -1) {
+          this.visible.splice(visible_index, 1);
+        }
+        break;
+      default:
+        throw NotANumberNorCard;
+    }
+  }
+
+  /**
+   * Remove multiple elements from a hand
+   * @param {Array<Card> | Array<Number>} cards
+   */
+  removeCards(cards) {
+    switch (cards[0].constructor.name) {
+      case "Card":
+        let cards_index = [];
+
+        for (let card of cards) {
+          if (card.constructor.name != "Card") {
+            throw new Error(
+              `Error at element ${cards.indexOf(card)} \n ${NotACard.error} ${
+                NotACard.message
+              }`
+            );
+          } else {
+            let aux_index = this.cards.indexOf(card);
+            if (aux_index == -1) {
+              throw new Error(
+                `Error at element ${cards.indexOf(card)} \n ${
+                  NotAvailableCard.error
+                } ${NotAvailableCard.message}`
+              );
+            } else {
+              cards_index.push(aux_index);
+            }
+          }
+        }
+
+        break;
+
+      case "Number":
+        let cards_array = [];
+
+        for (let card of cards) {
+          if (!Number.isInteger) {
+            throw new Error(
+              `Error at element ${cards.indexOf(card)} \n ${NotANumber.error} ${
+                NotANumber.message
+              }`
+            );
+          } else {
+            if (card >= this.cards.length) {
+              throw new Error(
+                `Error at element ${cards.indexOf(card)} \n ${
+                  OutOfArray.error
+                } ${OutOfArray.message}`
+              );
+            } else {
+              let aux_card = this.card(card);
+              cards_array.push(aux_card);
+            }
+          }
+        }
+        break;
+      default:
+        throw NotANumberNorCard;
     }
 
-    for (let index of cards) {
-      delete this.cards[index];
+    let pileLastCard = this.kind == "pile" && this.visible.length == 1;
+
+    switch (cards[0].constructor.name) {
+      case "Card":
+        for (let index in cards_index) {
+          delete this.cards[index];
+        }
+
+        for (let card in cards) {
+          let visible_index = this.visible.indexOf(card);
+          if (visible_index != -1) {
+            delete this.visible[visible_index];
+          }
+        }
+        break;
+      case "Number":
+        for (let index of cards) {
+          delete this.cards[index];
+        }
+        for (let card of cards_array) {
+          let visible_index = this.visible.indexOf(card);
+          if (visible_index != -1) {
+            delete this.visible[visible_index];
+          }
+        }
+        break;
     }
 
     // Remove empty items from this.cards
@@ -418,58 +455,55 @@ class Hand {
       return true;
     });
 
-    for (let card of cards_array) {
-      let visible_index = this.visible.indexOf(card);
-      if (visible_index != -1) {
-        delete this.visible[visible_index];
-      }
-    }
-
     // Remove empty items from this.visible
     this.visible.filter(function () {
       return true;
     });
 
     // Update last visible element for pile hands
-    if (this.kind == "pile" && this.visible.length == 1) {
+    if (pileLastCard) {
       this.visible[0] = this.cards[length - 1];
     }
+    break;
   }
 
   /**
    * Toggles the visibility of a card and returns the new state
-   * @param {Card | Integer} card
+   * @param {Card | Number} card
    */
   toggleVisibility(card) {
-    if (Number.isInteger(card)) {
-      if (cart >= this.cards.length) {
-        throw OutOfArray;
-      }
-      let aux_card = this.card(card);
-      let visibility_index = this.visible.indexOf(aux_card);
-      if (visibility_index == -1) {
-        this.visible.push(aux_card);
-        return "Visible";
-      } else {
-        this.visible.splice(visibility_index, 1);
-        return "Not visible";
-      }
-    } else if (card.constructor.name == "Card") {
-      let cards_index = this.cards.indexOf(card);
-      if (cards_index == -1) {
-        throw NotAvailableCard;
-      } else {
-        let visibility_index = this.visible.indexOf(cards_index);
+    switch (card.constructor.name) {
+      case "Number":
+        if (cart >= this.cards.length) {
+          throw OutOfArray;
+        }
+        let aux_card = this.card(card);
+        let visibility_index = this.visible.indexOf(aux_card);
         if (visibility_index == -1) {
-          this.visible.push(cards_index);
+          this.visible.push(aux_card);
           return "Visible";
         } else {
           this.visible.splice(visibility_index, 1);
           return "Not visible";
         }
-      }
-    } else {
-      throw NotANumberNorCard;
+      case "Card":
+        let cards_index = this.cards.indexOf(card);
+        if (cards_index == -1) {
+          throw NotAvailableCard;
+        } else {
+          let visibility_index = this.visible.indexOf(cards_index);
+          if (visibility_index == -1) {
+            this.visible.push(cards_index);
+            return "Visible";
+          } else {
+            this.visible.splice(visibility_index, 1);
+            return "Not visible";
+          }
+        }
+      default:
+        throw NotANumberNorCard;
     }
   }
 }
+
+
