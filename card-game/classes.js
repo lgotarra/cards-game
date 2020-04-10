@@ -11,10 +11,6 @@ the most common errors when calling some methods.
   -------------------------------------------COMMON ERRORS----------------------------------------
   ================================================================================================*/
 
-/* TODO:
- * NO: I'll use a switch case if need.Set "pile" as extensive class of hand
- */
-
 let NotAvailableCard = new ReferenceError(
   `The card you requested is not in this hand`
 );
@@ -26,7 +22,7 @@ let NotANumber = new TypeError(`"card" must be a number`);
 let NotACard = new TypeError(`"card" must be a Card object`);
 
 let OutOfArray = new ReferenceError(
-  `The card you are looking for is out of this hand. Please try a lower index`
+  `The object that you are looking for is out of this hand. Please try a lower input`
 );
 
 class KindError extends Error {
@@ -45,7 +41,7 @@ class Card {
    * Default Card constructor
    * @param {Number} value Card value
    * @param {String} suit Card suit
-   * @param {String} display Route to the card picture. (SVG or IMG)
+   * @param {String} display Route to the card picture. (IMG i.ex. .png)
    */
   constructor(value, suit, display) {
     if (!Number.isInteger(value)) {
@@ -93,7 +89,10 @@ class Hand {
    * kind (Type of hand), visible (Public/Visible cards).
    * @param {String} name Owner name
    * @param {Array<Card>} cards Array of cards that belongs to a hand
-   * @param {String} kind Type of hand: player | table | pile
+   * @param {String} kind Type of hand: player | table | pile.
+   * Player: default visible cards none.
+   * Table: default visible cards all.
+   * Pile: only the last card can be visible. Useful for the draw or de discard piles.
    * @param {Boolean} lastCard True: last card visible. False: last card not visible. Only
    * available for "pile" kind
    */
@@ -138,6 +137,13 @@ class Hand {
   }
 
   /**
+   * Gets the kind of a hand
+   */
+  get kind() {
+    return this.kind;
+  }
+
+  /**
    * Gets a card from the hand.
    * @param {Number | Card} card Index or Card that you want to get.
    */
@@ -164,7 +170,7 @@ class Hand {
   /**
    * Gets the visible cards. Returns an Array<Card>
    */
-  get visibility() {
+  get visible() {
     return this.visible;
   }
 
@@ -173,19 +179,23 @@ class Hand {
    * @param {Card} card Card that you want to set visible
    */
   set visible(card) {
-    if (card.constructor.name != "Card") {
-      throw NotACard;
-    }
-    let card_index = this.cards.indexOf(card);
-    if (card_index == -1) {
-      throw NotAvailableCard;
-    } else {
-      let visible_index = this.visible.indexOf(card);
-      if (visible_index == -1) {
-        this.visible.push(card);
-      } else {
-        console.log("Card already visible");
+    if (this.kind != "pile") {
+      if (card.constructor.name != "Card") {
+        throw NotACard;
       }
+      let card_index = this.cards.indexOf(card);
+      if (card_index == -1) {
+        throw NotAvailableCard;
+      } else {
+        let visible_index = this.visible.indexOf(card);
+        if (visible_index == -1) {
+          this.visible.push(card);
+        } else {
+          console.log("Card already visible");
+        }
+      }
+    } else {
+      throw NotAvailableMethod;
     }
   }
 
@@ -512,6 +522,10 @@ class Hand {
         throw NotANumberNorCard;
     }
   }
+  /**
+   * Shuffle the hand.
+   */
+  shuffle() {
+    this.sort(() => Math.random() - 0.5);
+  }
 }
-
-
